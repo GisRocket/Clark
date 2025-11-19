@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Clark</title>
+  <link rel="stylesheet" href="assets/css/style.css" />
+  <link id="dynamic-favicon" rel="icon" href="assets/images/frame_000_delay-0.03s.png" type="image/png">
+  <link id="dynamic-favicon" rel="icon" href="" type="image/png">
+<canvas id="favCanvas" width="32" height="32" style="display:none"></canvas>
+
+<script>
+const canvas = document.getElementById("favCanvas");
+const ctx = canvas.getContext("2d");
+const favicon = document.getElementById("dynamic-favicon");
+
+// масив с кадрите
+const frames = [
+  "assets/images/frame_000_delay-0.03s.png",
+"assets/images/frame_001_delay-0.07s.png",
+"assets/images/frame_002_delay-0.03s.png",
+"assets/images/frame_003_delay-0.07s.png",
+"assets/images/frame_004_delay-0.03s.png",
+"assets/images/frame_005_delay-0.07s.png",
+"assets/images/frame_006_delay-0.03s.png",
+"assets/images/frame_007_delay-0.07s.png",
+"assets/images/frame_008_delay-0.03s.png",
+"assets/images/frame_009_delay-0.07s.png",
+"assets/images/frame_010_delay-0.03s.png",
+"assets/images/frame_011_delay-0.07s.png",
+"assets/images/frame_012_delay-0.03s.png",
+"assets/images/frame_013_delay-0.07s.png",
+"assets/images/frame_014_delay-0.03s.png",
+"assets/images/frame_015_delay-0.07s.png",
+"assets/images/frame_016_delay-0.03s.png",
+"assets/images/frame_017_delay-0.07s.png",
+"assets/images/frame_018_delay-0.03s.png",
+"assets/images/frame_019_delay-0.07s.png",
+"assets/images/frame_020_delay-0.03s.png",
+"assets/images/frame_021_delay-0.07s.png",
+"assets/images/frame_022_delay-0.03s.png",
+"assets/images/frame_023_delay-0.07s.png",
+"assets/images/frame_024_delay-0.03s.png",
+"assets/images/frame_025_delay-0.07s.png",
+"assets/images/frame_026_delay-0.03s.png",
+"assets/images/frame_027_delay-0.07s.png",
+"assets/images/frame_028_delay-0.03s.png",
+"assets/images/frame_029_delay-0.07s.png",
+"assets/images/frame_030_delay-0.03s.png",
+"assets/images/frame_031_delay-0.07s.png",
+"assets/images/frame_032_delay-0.03s.png",
+"assets/images/frame_033_delay-0.07s.png",
+"assets/images/frame_034_delay-0.03s.png",
+"assets/images/frame_035_delay-0.07s.png",
+"assets/images/frame_036_delay-0.03s.png",
+"assets/images/frame_037_delay-0.07s.png",
+"assets/images/frame_038_delay-0.03s.png",
+"assets/images/frame_039_delay-0.07s.png",
+"assets/images/frame_040_delay-0.03s.png",
+"assets/images/frame_041_delay-0.07s.png",
+"assets/images/frame_042_delay-0.03s.png",
+"assets/images/frame_043_delay-0.07s.png",
+"assets/images/frame_044_delay-0.03s.png",
+"assets/images/frame_045_delay-0.07s.png",
+"assets/images/frame_046_delay-0.03s.png",
+"assets/images/frame_047_delay-0.07s.png",
+"assets/images/frame_048_delay-0.03s.png",
+"assets/images/frame_049_delay-0.07s.png",
+"assets/images/frame_050_delay-0.03s.png",
+"assets/images/frame_051_delay-0.07s.png",
+"assets/images/frame_052_delay-0.03s.png",
+"assets/images/frame_053_delay-0.07s.png",
+"assets/images/frame_054_delay-0.03s.png",
+"assets/images/frame_055_delay-0.07s.png",
+"assets/images/frame_056_delay-0.03s.png",
+"assets/images/frame_057_delay-0.07s.png",
+"assets/images/frame_058_delay-0.03s.png",
+"assets/images/frame_059_delay-0.07s.png",
+"assets/images/frame_060_delay-0.03s.png",
+"assets/images/frame_061_delay-0.07s.png",
+"assets/images/frame_062_delay-0.03s.png",
+"assets/images/frame_063_delay-0.07s.png",
+"assets/images/frame_064_delay-0.03s.png",
+"assets/images/frame_065_delay-0.07s.png",
+"assets/images/frame_066_delay-0.03s.png",
+"assets/images/frame_067_delay-0.07s.png",
+"assets/images/frame_068_delay-0.03s.png",
+"assets/images/frame_069_delay-0.07s.png",
+"assets/images/frame_070_delay-0.03s.png",
+"assets/images/frame_071_delay-0.07s.png",
+"assets/images/frame_072_delay-0.03s.png",
+"assets/images/frame_073_delay-0.07s.png",
+"assets/images/frame_074_delay-0.03s.png",
+"assets/images/frame_075_delay-0.07s.png",
+"assets/images/frame_076_delay-0.03s.png",
+"assets/images/frame_077_delay-0.07s.png",
+"assets/images/frame_078_delay-0.03s.png",
+"assets/images/frame_079_delay-0.07s.png",
+"assets/images/frame_080_delay-0.03s.png",
+"assets/images/frame_081_delay-0.07s.png",
+"assets/images/frame_082_delay-0.03s.png",
+"assets/images/frame_083_delay-0.07s.png",
+"assets/images/frame_084_delay-0.03s.png",
+"assets/images/frame_085_delay-0.07s.png",
+"assets/images/frame_086_delay-0.03s.png",
+"assets/images/frame_087_delay-0.07s.png",
+"assets/images/frame_088_delay-0.03s.png",
+"assets/images/frame_089_delay-0.07s.png",
+"assets/images/frame_090_delay-0.03s.png",
+"assets/images/frame_091_delay-0.07s.png",
+"assets/images/frame_092_delay-0.03s.png",
+"assets/images/frame_093_delay-0.07s.png",
+"assets/images/frame_094_delay-0.03s.png",
+"assets/images/frame_095_delay-0.07s.png",
+"assets/images/frame_096_delay-0.03s.png",
+"assets/images/frame_097_delay-0.07s.png",
+"assets/images/frame_098_delay-0.03s.png",
+"assets/images/frame_099_delay-0.07s.png",
+"assets/images/frame_100_delay-0.03s.png",
+"assets/images/frame_101_delay-0.07s.png",
+"assets/images/frame_102_delay-0.03s.png",
+"assets/images/frame_103_delay-0.07s.png",
+"assets/images/frame_104_delay-0.03s.png",
+"assets/images/frame_105_delay-0.07s.png",
+"assets/images/frame_106_delay-0.03s.png",
+"assets/images/frame_107_delay-0.07s.png",
+"assets/images/frame_108_delay-0.03s.png",
+"assets/images/frame_109_delay-0.07s.png",
+"assets/images/frame_110_delay-0.03s.png",
+"assets/images/frame_111_delay-0.07s.png",
+"assets/images/frame_112_delay-0.03s.png",
+"assets/images/frame_113_delay-0.07s.png",
+"assets/images/frame_114_delay-0.03s.png",
+"assets/images/frame_115_delay-0.07s.png",
+"assets/images/frame_116_delay-0.03s.png",
+"assets/images/frame_117_delay-0.07s.png",
+"assets/images/frame_118_delay-0.03s.png",
+"assets/images/frame_119_delay-0.07s.png",
+"assets/images/frame_120_delay-0.03s.png",
+"assets/images/frame_121_delay-0.07s.png",
+"assets/images/frame_122_delay-0.03s.png",
+"assets/images/frame_123_delay-0.07s.png",
+"assets/images/frame_124_delay-0.03s.png",
+"assets/images/frame_125_delay-0.07s.png",
+"assets/images/frame_126_delay-0.03s.png",
+"assets/images/frame_127_delay-0.07s.png",
+"assets/images/frame_128_delay-0.03s.png",
+"assets/images/frame_129_delay-0.07s.png",
+"assets/images/frame_130_delay-0.03s.png",
+"assets/images/frame_131_delay-0.07s.png",
+"assets/images/frame_132_delay-0.03s.png",
+"assets/images/frame_133_delay-0.07s.png",
+"assets/images/frame_134_delay-0.03s.png",
+"assets/images/frame_135_delay-0.07s.png",
+"assets/images/frame_136_delay-0.03s.png",
+"assets/images/frame_137_delay-0.07s.png",
+"assets/images/frame_138_delay-0.03s.png",
+"assets/images/frame_139_delay-0.07s.png",
+"assets/images/frame_140_delay-0.03s.png",
+"assets/images/frame_141_delay-0.07s.png",
+"assets/images/frame_142_delay-0.03s.png",
+"assets/images/frame_143_delay-0.07s.png",
+"assets/images/frame_144_delay-0.03s.png",
+"assets/images/frame_145_delay-0.07s.png",
+"assets/images/frame_146_delay-0.03s.png",
+"assets/images/frame_147_delay-0.07s.png",
+"assets/images/frame_148_delay-0.03s.png",
+"assets/images/frame_149_delay-0.07s.png",
+"assets/images/frame_150_delay-0.03s.png",
+"assets/images/frame_151_delay-0.07s.png",
+"assets/images/frame_152_delay-0.03s.png",
+"assets/images/frame_153_delay-0.07s.png",
+"assets/images/frame_154_delay-0.03s.png",
+"assets/images/frame_155_delay-0.07s.png",
+"assets/images/frame_156_delay-0.03s.png",
+"assets/images/frame_157_delay-0.07s.png",
+"assets/images/frame_158_delay-0.03s.png",
+"assets/images/frame_159_delay-0.08s.png",
+
+];
+
+let i = 0;
+const images = frames.map(src => {
+  const img = new Image();
+  img.src = src;
+  return img;
+});
+
+setInterval(() => {
+  ctx.clearRect(0,0,32,32);
+  ctx.drawImage(images[i], 0, 0, 32, 32);
+  favicon.href = canvas.toDataURL("image/png");
+  i = (i + 1) % images.length;
+}, 50); // ~20 fps
+</script>
+</head>
+<body>
+  <header>
+    <img src="assets/images/logo.gif" alt="Clark Logo" class="site-logo"/>
+    <h1>Clark</h1>
+    <nav>
+      <a href="index.html">Начало</a>
+      <a href="about.html">За Clark</a>
+      <a href="contact.html">Контакт</a>
+    </nav>
+  </header>
+
+  <main>
+    
+  </main>
+
+  <footer>
+    <p>&copy; Михаил Лазаров. Всички права запазени.</p>
+  </footer>
+
+</body>
+</html>
