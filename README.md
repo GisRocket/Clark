@@ -12,28 +12,9 @@ For correct working of the app project to compile and edit please enable Win32 l
 
 **If you are on Home edition of Windows you shouldn't have gpedit.msc, but you can download it without upgrading to Pro.**
 
-Only with one .bat file
+Only with one simple command for CMD with admin rights:
 
-Code of install-gpedit.bat: 
-```bat
-  @echo off
-   nul 2>&1 "%SYSTEMROOT%\system32\cacls.exe" "%SYSTEMROOT%\system32\config\system"
-   REM --> If error flag set, we do not have admin.
-   if '%errorlevel%' NEQ '0' (
-   echo Requesting administrative privileges…
-   goto UACPrompt
-   ) else ( goto gotAdmin )
-   :UACPrompt
-   echo Set UAC = CreateObject^("Shell.Application"^) > "%temp%\getadmin.vbs"
-   echo UAC.ShellExecute "%~s0", "", "", "runas", 1 >> "%temp%\getadmin.vbs"
-   "%temp%\getadmin.vbs"
-   exit /B
-   :gotAdmin
-   if exist "%temp%\getadmin.vbs" ( del "%temp%\getadmin.vbs" )
-   pushd "%CD%"
-   CD /D "%~dp0" 
- pushd "%~dp0"
- dir /b %SystemRoot%\servicing\Packages\Microsoft-Windows-GroupPolicy-ClientExtensions-Package~3.mum >List.txt dir /b %SystemRoot%\servicing\Packages\Microsoft-Windows-GroupPolicy-ClientTools-Package~3.mum >>List.txt
- for /f %%i in ('findstr /i . List.txt 2^>nul') do dism /online /norestart /add-package:"%SystemRoot%\servicing\Packages\%%i"
- pause
+```batch
+FOR %F IN ("%SystemRoot%\servicing\Packages\Microsoft-Windows-GroupPolicy-ClientTools-Package~*.mum") DO (DISM /Online /NoRestart /Add-Package:"%F")
+FOR %F IN ("%SystemRoot%\servicing\Packages\Microsoft-Windows-GroupPolicy-ClientExtensions-Package~*.mum") DO (DISM /Online /NoRestart /Add-Package:"%F")
 ```
