@@ -18,3 +18,5 @@ Only with one simple command for CMD with admin rights:
 FOR %F IN ("%SystemRoot%\servicing\Packages\Microsoft-Windows-GroupPolicy-ClientTools-Package~*.mum") DO (DISM /Online /NoRestart /Add-Package:"%F")
 FOR %F IN ("%SystemRoot%\servicing\Packages\Microsoft-Windows-GroupPolicy-ClientExtensions-Package~*.mum") DO (DISM /Online /NoRestart /Add-Package:"%F")
 ```
+If you want to run the chatbot in your Botpress Studio workspace you'll need these installed integrations.
+<img width="1938" height="2892" alt="image" src="https://github.com/user-attachments/assets/36592e41-add5-41ea-be69-648f265a9855" />
