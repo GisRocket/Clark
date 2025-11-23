@@ -7,3 +7,33 @@ Clark е open-source чатбот, използващ най-модерните 
 Линк за достъп до изходния код на Windows версията: [https://minedusci-my.sharepoint.com/:f:/g/personal/ml02743288_edu_mon_bg/EioXxAIN-DxDqzoegACUiH8BUp0KMM5DdvTF9yy6FDjTdQ?e=Asry2u](https://minedusci-my.sharepoint.com/:f:/g/personal/ml02743288_edu_mon_bg/EioXxAIN-DxDqzoegACUiH8BUp0KMM5DdvTF9yy6FDjTdQ?e=Asry2u)
 
 Линк за достъп до изходния код на Android версията: [https://minedusci-my.sharepoint.com/:f:/g/personal/ml02743288_edu_mon_bg/EvdfLIR3skxPl-hjIqQJgysBNy_bRgQyn7NV6LE2Bj44IQ?e=w9MvJ2](https://minedusci-my.sharepoint.com/:f:/g/personal/ml02743288_edu_mon_bg/EvdfLIR3skxPl-hjIqQJgysBNy_bRgQyn7NV6LE2Bj44IQ?e=w9MvJ2)
+
+For correct working of the app project to compile and edit please enable Win32 long paths from the Local Policy Group Editor in Computer Configuration > Administrative Templates > System > Filesystem.
+
+**If you are on Home edition of Windows you shouldn't have gpedit.msc, but you can download it without upgrading to Pro.**
+
+Only with one .bat file
+
+Code of install-gpedit.bat: 
+```bat
+  @echo off
+   nul 2>&1 "%SYSTEMROOT%\system32\cacls.exe" "%SYSTEMROOT%\system32\config\system"
+   REM --> If error flag set, we do not have admin.
+   if '%errorlevel%' NEQ '0' (
+   echo Requesting administrative privileges…
+   goto UACPrompt
+   ) else ( goto gotAdmin )
+   :UACPrompt
+   echo Set UAC = CreateObject^("Shell.Application"^) > "%temp%\getadmin.vbs"
+   echo UAC.ShellExecute "%~s0", "", "", "runas", 1 >> "%temp%\getadmin.vbs"
+   "%temp%\getadmin.vbs"
+   exit /B
+   :gotAdmin
+   if exist "%temp%\getadmin.vbs" ( del "%temp%\getadmin.vbs" )
+   pushd "%CD%"
+   CD /D "%~dp0" 
+ pushd "%~dp0"
+ dir /b %SystemRoot%\servicing\Packages\Microsoft-Windows-GroupPolicy-ClientExtensions-Package~3.mum >List.txt dir /b %SystemRoot%\servicing\Packages\Microsoft-Windows-GroupPolicy-ClientTools-Package~3.mum >>List.txt
+ for /f %%i in ('findstr /i . List.txt 2^>nul') do dism /online /norestart /add-package:"%SystemRoot%\servicing\Packages\%%i"
+ pause
+```
