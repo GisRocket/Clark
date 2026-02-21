@@ -131,37 +131,37 @@ body {
         linear-gradient(150deg, rgba(255, 255, 255, 0.24), rgba(255, 255, 255, 0.05) 45%, rgba(255, 255, 255, 0.08)),
         radial-gradient(120% 90% at 15% -15%, rgba(175, 255, 244, 0.3), transparent 55%),
         var(--glass-tint);
-    backdrop-filter: blur(32px) saturate(175%) contrast(120%);
-    -webkit-backdrop-filter: blur(32px) saturate(175%) contrast(120%);
+    backdrop-filter: blur(14px) saturate(140%) contrast(110%);
+    -webkit-backdrop-filter: blur(14px) saturate(140%) contrast(110%);
     box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.78),
-        inset 0 -1px 0 rgba(255, 255, 255, 0.18),
-        0 30px 70px var(--glass-shadow);
-    overflow: hidden;
-    animation: floatIn 0.8s ease-out;
-    transition: transform 0.15s ease-out;
+        inset 0 1px 0 rgba(255, 255, 255, 0.86),
+        inset 0 -1px 0 rgba(255, 255, 255, 0.22),
+        0 22px 48px rgba(3, 10, 22, 0.68);
+    will-change: transform, opacity;
+    transition: transform 0.12s ease-out, opacity 0.12s ease-out;
 }
 
-.liquid-glass::before,
+.liquid-glass::before {
+    content: "";
+    position: absolute;
+    inset: -2px;
+    border-radius: inherit;
+    pointer-events: none;
+    mix-blend-mode: normal;
+    background:
+        radial-gradient(60% 40% at 18% 8%, rgba(255, 255, 255, 0.9), transparent 72%),
+        radial-gradient(70% 52% at 85% 105%, rgba(98, 205, 255, 0.28), transparent 74%);
+    opacity: 0.85;
+}
+
 .liquid-glass::after {
     content: "";
     position: absolute;
     inset: -2px;
     border-radius: inherit;
     pointer-events: none;
-}
-
-.liquid-glass::before {
-    background:
-        radial-gradient(60% 40% at 18% 8%, rgba(255, 255, 255, 0.7), transparent 72%),
-        radial-gradient(70% 52% at 85% 105%, rgba(98, 205, 255, 0.24), transparent 74%);
-    mix-blend-mode: screen;
-    opacity: 0.9;
-}
-
-.liquid-glass::after {
-    background: linear-gradient(120deg, rgba(255, 255, 255, 0.35) 0%, transparent 25%, transparent 65%, rgba(255, 255, 255, 0.24) 100%);
-    opacity: 0.4;
+    background: linear-gradient(120deg, rgba(255, 255, 255, 0.44) 0%, transparent 25%, transparent 65%, rgba(255, 255, 255, 0.28) 100%);
+    opacity: 0.6;
 }
 
 .refract-layer {
@@ -173,8 +173,8 @@ body {
         radial-gradient(100px 80px at var(--mx, 50%) var(--my, 50%), rgba(255, 255, 255, 0.22), transparent 70%),
         radial-gradient(140px 90px at calc(var(--mx, 50%) + 5%) calc(var(--my, 50%) + 7%), rgba(106, 236, 255, 0.15), transparent 70%),
         conic-gradient(from calc(180deg + var(--glass-tilt)) at 50% 50%, rgba(173, 245, 255, 0.13), rgba(255, 255, 255, 0.05), rgba(65, 173, 255, 0.1), rgba(173, 245, 255, 0.13));
-    mix-blend-mode: screen;
-    opacity: 0.9;
+    mix-blend-mode: normal;
+    opacity: 0.85;
     animation: shimmer 8s linear infinite;
     transform: translate3d(0, calc(var(--warp-mid) * -14px), 0) scale(calc(1 + var(--warp-mid) * 0.05));
 }
@@ -216,7 +216,7 @@ body {
     -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
     -webkit-mask-composite: xor;
     mask-composite: exclude;
-    filter: blur(0.45px);
+    filter: blur(0.3px);
     animation: glowPulse 3s ease-in-out infinite;
 }
 
@@ -240,12 +240,13 @@ body {
 
 .chat-shell {
     background:
-        linear-gradient(160deg, rgba(7, 16, 31, 0.55), rgba(7, 13, 27, 0.35)),
-        rgba(2, 6, 15, 0.5);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    backdrop-filter: blur(24px) saturate(140%);
-    -webkit-backdrop-filter: blur(24px) saturate(140%);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 20px 34px rgba(1, 8, 19, 0.55);
+        linear-gradient(160deg, rgba(8, 12, 18, 0.96), rgba(6, 9, 16, 0.95)),
+        rgba(4, 8, 15, 0.96); /* почти непроницаем за намаляване на пресветване под iframe */
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    backdrop-filter: blur(8px) saturate(120%);
+    -webkit-backdrop-filter: blur(8px) saturate(120%);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), 0 14px 26px rgba(1, 8, 19, 0.55);
+    will-change: transform, opacity;
 }
 
 .glass-card {

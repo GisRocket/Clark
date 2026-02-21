@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Clark | Контакти</title>
 
-    <link rel="icon" type="image/gif" href="/assets/images/logo.gif" />
+    <link rel="icon" type="image/gif" href="https://github.com/GisRocket/Clark/blob/main/assets/images/logo.gif?raw=true" />
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="/styles.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;800;900&display=swap" rel="stylesheet" />
@@ -19,7 +19,7 @@
         <div class="relative z-10 flex justify-between items-center">
             <div class="flex items-center gap-2 sm:gap-4">
                 <a href="/" target="_blank" rel="noopener noreferrer">
-                    <img src="/assets/images/logo.gif" alt="Clark AI Logo" class="w-8 sm:w-10 h-8 sm:h-10 rounded-lg object-cover border border-white/20"/>
+                    <img src="https://github.com/GisRocket/Clark/blob/main/assets/images/logo.gif?raw=true" alt="Clark AI Logo" class="w-8 sm:w-10 h-8 sm:h-10 rounded-lg object-cover border border-white/20"/>
                 </a>
                 <span class="text-lg sm:text-xl font-black tracking-tight text-white">Clark</span>
             </div>
@@ -27,6 +27,8 @@
                 <a href="https://cdn.botpress.cloud/webchat/v3.6/shareable.html?configUrl=https://files.bpcontent.cloud/2025/02/26/16/20250226164516-B7MKF0O8.json" target="_blank" class="hover:text-white transition-colors">Отвори Clark</a>
                 <a href="/pages/download/" class="hover:text-white transition-colors">Изтегли</a>
                 <a href="/pages/about/" class="hover:text-white transition-colors">За проекта</a>
+                <a href="https://www.gnu.org/licenses/gpl-3.0.html#license-text" target="_blank" class="hover:text-white transition-colors">Лиценз</a>
+
             </div>
             <a href="https://github.com/GisRocket/Clark" target="_blank" class="bg-white/12 px-3 sm:px-5 py-2 rounded-full border border-white/30 text-xs font-semibold uppercase tracking-widest hover:bg-white/20 transition-colors">GitHub</a>
         </div>
@@ -46,7 +48,7 @@
                     <p class="text-white/70 mb-6">Имате въпрос, предложения или сте открили проблем? Пишете — ще отговоря възможно най-скоро.</p>
 
                     <ul class="text-white/70 space-y-3 text-sm">
-                        <li><strong>Имейл:</strong> <a href="mailto:contact@clark.free.bg" class="text-cyan-300 hover:underline">contact@clark.free.bg</a></li>
+                        <li><strong>Имейл:</strong> <a href="mailto:clark@mail.bg" class="text-cyan-300 hover:underline">clark@mail.bg</a></li>
                         <li><strong>GitHub:</strong> <a href="https://github.com/GisRocket/Clark" target="_blank" class="text-cyan-300 hover:underline">GisRocket/Clark</a></li>
                         <li><strong>Лиценз:</strong> <a href="https://www.gnu.org/licenses/gpl-3.0.html" target="_blank" class="text-cyan-300 hover:underline">GPLv3</a></li>
                     </ul>
@@ -56,25 +58,23 @@
                     </div>
                 </div>
 
-                <form class="space-y-4" action="mailto:contact@clark.free.bg" method="post" enctype="text/plain">
-                    <div>
-                        <label class="text-xs text-white/70">Име</label>
-                        <input type="text" name="name" required class="mt-1 w-full px-4 py-2 rounded-lg bg-white/90 border border-white/20 text-black placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-300"/>
-                    </div>
-
-                    <div>
-                        <label class="text-xs text-white/70">Имейл</label>
-                        <input type="email" name="email" required class="mt-1 w-full px-4 py-2 rounded-lg bg-white/90 border border-white/20 text-black placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-300"/>
-                    </div>
-
-                    <div>
-                        <label class="text-xs text-white/70">Съобщение</label>
-                        <textarea name="message" rows="6" required class="mt-1 w-full px-4 py-3 rounded-lg bg-white/90 border border-white/20 text-black placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-300"></textarea>
-                    </div>
-
-                    <div class="flex gap-3">
-                        <button type="submit" class="bg-gradient-to-r from-cyan-400 to-blue-400 text-white px-4 py-2 rounded-full font-semibold text-sm hover:from-cyan-500 hover:to-blue-500 transition-colors">Изпрати</button>
-                        <button type="reset" class="bg-white/6 border border-white/10 text-white px-4 py-2 rounded-full text-sm hover:bg-white/8 transition-colors">Изчисти</button>
+                <form id="contactForm" class="space-y-4">
+                    <!-- заменете FORM_ID с вашия Tally form id -->
+                    <div class="w-full">
+                        <iframe
+                            src="https://tally.so/embed/rj6qA2?hideTitle=1&alignCenter=1&skipFooter=1"
+                            width="100%"
+                            height="620"
+                            frameborder="0"
+                            marginheight="0"
+                            marginwidth="0"
+                            class="rounded-lg border-none"
+                            title="Clark contact form (Tally)"
+                        ></iframe>
+                        <noscript class="text-sm text-white/70 mt-2 block">
+                            Формата изисква Javascript. Можете да отворите формата тук:
+                            <a href="https://tally.so/r/rj6qA2" target="_blank" class="text-cyan-300 underline">Отвори формата в нов прозорец</a>
+                        </noscript>
                     </div>
                 </form>
             </div>
