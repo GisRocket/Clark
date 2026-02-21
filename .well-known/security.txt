@@ -1,0 +1,7 @@
+Contact: mailto:clark@mail.bg
+Contact: https://github.com/GisRocket/Clark/issues
+Expires: 2027-02-21T23:59:59Z
+Preferred-Languages: bg, en
+Canonical: https://clark.free.bg/.well-known/security.txt
+Policy: https://github.com/GisRocket/Clark/security/policy
+Acknowledgments: https://github.com/GisRocket/Clark

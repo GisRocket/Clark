@@ -1,0 +1,12 @@
+/* TEAM */
+Project: Clark
+Site: https://clark.free.bg/
+GitHub: https://github.com/GisRocket/Clark
+Contact: mailto:clark@mail.bg
+
+/* THANKS */
+Open-source community
+
+/* SITE */
+Standards: HTML5, CSS3
+Language: Bulgarian
