@@ -34,12 +34,32 @@
                 <a href="https://cdn.botpress.cloud/webchat/v3.6/shareable.html?configUrl=https://files.bpcontent.cloud/2025/02/26/16/20250226164516-B7MKF0O8.json" target="_blank" class="hover:text-white transition-colors">Отвори Clark</a>
                 <a href="/pages/download/" class="hover:text-white transition-colors">Изтегли</a>
                 <a href="/pages/about/" class="hover:text-white transition-colors">За проекта</a>
+                <a href="/pages/contact/" class="hover:text-white transition-colors">Контакти</a>
                 <a href="https://www.gnu.org/licenses/gpl-3.0.html#license-text" target="_blank" class="hover:text-white transition-colors">Лиценз</a>
 
             </div>
-            <a href="https://github.com/GisRocket/Clark" target="_blank" class="bg-white/12 px-3 sm:px-5 py-2 rounded-full border border-white/30 text-xs font-semibold uppercase tracking-widest hover:bg-white/20 transition-colors">GitHub</a>
+            <div class="flex items-center gap-2">
+                <a href="https://github.com/GisRocket/Clark" target="_blank" class="hidden md:inline-flex bg-white/12 px-3 sm:px-5 py-2 rounded-full border border-white/30 text-xs font-semibold uppercase tracking-widest hover:bg-white/20 transition-colors">GitHub</a>
+                <a
+                    href="#mobile-menu"
+                    class="mobile-menu-btn md:hidden"
+                    aria-label="Отвори менюто"
+                >
+                    ☰
+                </a>
+            </div>
         </div>
     </nav>
+    <aside id="mobile-menu" class="mobile-menu-drawer md:hidden" aria-hidden="true">
+        <a href="#" class="mb-6 inline-flex text-white/80 hover:text-white" aria-label="Затвори менюто">✕</a>
+        <a href="https://cdn.botpress.cloud/webchat/v3.6/shareable.html?configUrl=https://files.bpcontent.cloud/2025/02/26/16/20250226164516-B7MKF0O8.json" target="_blank">Отвори Clark</a>
+        <a href="/pages/download/">Изтегли</a>
+        <a href="/pages/about/">За проекта</a>
+        <a href="/pages/contact/">Контакти</a>
+        <a href="https://www.gnu.org/licenses/gpl-3.0.html#license-text" target="_blank">Лиценз</a>
+        <a href="https://github.com/GisRocket/Clark" target="_blank">GitHub</a>
+    </aside>
+    <a href="#" class="mobile-menu-overlay md:hidden" aria-label="Затвори менюто"></a>
 
     <main class="w-full max-w-6xl mt-32 lg:mt-40 px-5 lg:px-6 mx-auto pb-20">
         <section class="liquid-glass p-7 md:p-10 lg:p-16 shadow-2xl" id="mainSection">
