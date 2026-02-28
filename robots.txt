@@ -1,4 +1,0 @@
-User-agent: *
-Allow: /
-
-Sitemap: https://clark.free.bg/sitemap.xml
