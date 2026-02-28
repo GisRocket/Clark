@@ -1,3 +1,3 @@
-# Clark for Android download files link
+# Clark for Android source code
 
-[https://minedusci-my.sharepoint.com/:u:/g/personal/ml02743288_edu_mon_bg/IQA4dow3J5_fTp2P4KX6vwpoAYdUh4mPY2B1hJ7dmE5tnwk?e=sbrQG3](https://minedusci-my.sharepoint.com/:u:/g/personal/ml02743288_edu_mon_bg/IQA4dow3J5_fTp2P4KX6vwpoAYdUh4mPY2B1hJ7dmE5tnwk?e=sbrQG3)
+За достъп до source кода моля свържете се на имейл <clark@mail.bg>

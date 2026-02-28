@@ -1,3 +1,3 @@
-# Clark Desktop download files link
+# Clark Desktop source code
 
-[https://minedusci-my.sharepoint.com/:u:/g/personal/ml02743288_edu_mon_bg/IQCcK_RIN6-rTYVqwp3MM6dXAVVsXPcr0o7lV6Mqxn3IBRU?e=sQZWVx](https://minedusci-my.sharepoint.com/:u:/g/personal/ml02743288_edu_mon_bg/IQCcK_RIN6-rTYVqwp3MM6dXAVVsXPcr0o7lV6Mqxn3IBRU?e=sQZWVx)
+За достъп до source кода моля свържете се на имейл <clark@mail.bg>
