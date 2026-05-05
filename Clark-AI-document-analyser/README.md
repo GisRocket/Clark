@@ -1,5 +1,9 @@
 # Clark AI Document Analyser Generator
 
+![Logo](logo.png)
+
+[![License: GPL v3](https://img.shields.io/badge/license-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0.en.html) [![Node.js](https://img.shields.io/badge/node-%3E%3D14-green.svg)](https://nodejs.org/) [![npm](https://img.shields.io/badge/npm-install-orange.svg)](https://www.npmjs.com/) [![Tailscale](https://img.shields.io/badge/Tailscale-required-blue.svg)](https://tailscale.com/)
+
 A Node.js server for secure document upload, encryption, and analysis using AES-256 encryption for the uploaded files from my Botpress Cloud chatbot. Designed to run locally with Tailscale integration for secure access.
 
 ## Features
@@ -281,3 +285,5 @@ TAILSCALE_BASE_URL=http://100.x.x.x:3000
 ```
 
 Use that same base URL in Botpress snippets and in the dashboard if you access it remotely.
+
+©GisRocket
