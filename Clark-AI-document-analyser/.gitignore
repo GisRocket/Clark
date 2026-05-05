@@ -1,0 +1,22 @@
+# Node modules
+node_modules/
+
+# Local environment variables
+.env
+
+# Vault data and encryption keys
+vault/files/
+vault/keys/
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor folders
+.vscode/
+.idea/
