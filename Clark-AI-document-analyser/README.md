@@ -9,9 +9,11 @@ A Node.js server for secure document upload, encryption, and analysis using AES-
 ## Features
 
 - **Secure File Upload**: Upload files from URLs and encrypt them using AES-256-CBC.
-- **File Analysis**: Process uploaded files and clean up temporary data.
-- **Encryption at Rest**: All stored files are encrypted.
-- **Streaming Support**: Handles large files efficiently with streaming.
+- **File Storage & Cleanup**: Store encrypted files from upload and delete them on demand.
+- **Encryption at Rest**: All stored files are encrypted with AES-256-CBC.
+- **Streaming Support**: Automatically uses streaming for files larger than 500 MB.
+- **Cluster Support**: Multi-worker process for better performance on multi-core systems.
+- **Async Queue**: Efficient file upload queue with configurable concurrency.
 - **Tailscale Integration**: Secure access via Tailscale network.
 - **Botpress Compatible**: Snippets for integration with Botpress workflows.
 
@@ -36,63 +38,24 @@ npm install
 
 ## Configuration
 
-The server uses a master secret for authentication. The default is set in the code as `SuperSecret2026`. For production, change this in `server.js` or modify the code to read the secret from `.env`.
+The server requires a master secret for authentication. Set it in the code or via environment variables.
 
 ### .env file
 
-Use a `.env` file to store local configuration and API credentials securely. Example values include:
+Create a `.env` file in the project root with the following configuration:
 
 ```env
 PORT=3000
 TAILSCALE_BASE_URL=http://your-device-name.your-tailnet.ts.net:3000
-API_AUTH_TOKEN=change-me-to-a-long-random-string
-GEMINI_API_KEY=YOUR_GOOGLE_AI_STUDIO_API_KEY
-GEMINI_MODEL=gemini-3-flash-lite
-FILE_ENCRYPTION_KEY_HEX=put_64_hex_chars_here
-RETENTION_MINUTES=60
-JOB_RETENTION_MINUTES=1440
-MAX_CHUNK_SIZE=10000
-RETRY_LIMIT=3
-OCR_LANGS=eng
-WHISPER_MODEL=base
 ```
 
-Important `.env` variables:
+### Important Notes
 
-- `PORT`: the local HTTP port for the server (default `3000`).
-- `TAILSCALE_BASE_URL`: your Tailscale hostname or exposed server address used by Botpress and other clients.
-- `API_AUTH_TOKEN`: optional bearer token for access control. If empty, auth is disabled.
-- `GEMINI_API_KEY`: Google AI Studio API key for Gemini model calls.
-- `GEMINI_MODEL`: model name, e.g. `gemini-3-flash-lite` or `gemini-3.1-flash-lite`.
-- `FILE_ENCRYPTION_KEY_HEX`: 64-character hex key for encrypting files at rest.
-- `RETENTION_MINUTES`: how long uploaded files are kept before cleanup.
-- `JOB_RETENTION_MINUTES`: how long job metadata is kept.
-- `MAX_CHUNK_SIZE`: maximum token/window size for any text processing chunk.
-- `RETRY_LIMIT`: number of retry attempts for transient download or processing failures.
-- `OCR_LANGS`: OCR language codes for `tesseract.js` (default `eng`).
-- `WHISPER_MODEL`: speech transcription model if audio transcription is used.
-
-If you do not use `.env`, set these variables in your shell before running the server.
-
-### AI Model Setup
-
-This project is designed to work with Google AI Studio / Gemini for text analysis and summarization from your Botpress Cloud chatbot.
-
-- `GEMINI_API_KEY`: your Google AI Studio API key.
-- `GEMINI_MODEL`: recommended model is `gemini-3-flash-lite` for fast, lower-cost inference.
-
-If you want analysis to happen in Botpress or another app layer, keep the local server as the encrypted upload endpoint and use Gemini from the workflow.
-
-Example:
-```env
-GEMINI_API_KEY=YOUR_GOOGLE_AI_STUDIO_API_KEY
-GEMINI_MODEL=gemini-3-flash-lite
-```
-
-Google AI Studio notes:
-- Create or use an existing project in Google AI Studio.
-- Generate an API key from the credentials section.
-- Use `gemini-3-flash-lite` for lightweight, responsive text analysis.
+- The server uses `SuperSecret2026` as the default master secret (hardcoded in `server.js`).
+- For production, change the `MASTER_SECRET` value in `server.js` or implement `.env` support for it.
+- File encryption uses AES-256-CBC with randomly generated keys and initialization vectors.
+- Files larger than 500 MB are processed using streaming mode for efficiency.
+- Worker processes are automatically spawned based on CPU core count for optimal performance.
 
 ## Running the Server
 
@@ -102,32 +65,51 @@ Start the server:
 npm start
 ```
 
-The server runs on port 3000 by default, or use `PORT` environment variable.
+The server runs on port 3000 by default, or specify a custom port:
 
-To expose via Tailscale:
+```bash
+PORT=8080 npm start
+```
 
-For every OS:
+**What happens at startup:**
+- Creates `vault/files` and `vault/keys` directories (auto-created if missing)
+- Spawns worker processes based on CPU core count
+- Initializes an async queue for file uploads
+- Ready to accept requests
+
+### Exposing via Tailscale
+
+Make the server accessible through Tailscale funnel:
+
 ```bash
 tailscale funnel 3000
 ```
 
-
-for **Windows**, if your PATH isn't working:
+**On Windows (if PATH isn't set):**
 ```bash
-   & "C:\Program Files\Tailscale\tailscale.exe" funnel 3000
+& "C:\Program Files\Tailscale\tailscale.exe" funnel 3000
 ```
-If your Tailscale is installed in another location, please change the path in the command.
+
+If your Tailscale is installed elsewhere, adjust the path accordingly.
+
+Then use the Tailscale hostname in your requests:
+```
+TAILSCALE_BASE_URL=https://your-device-name.your-tailnet.ts.net:3000
+```
 
 ## API Endpoints
 
 ### POST /
 
-Handles upload and analyze actions. Requires `Authorization: Bearer <MASTER_SECRET>` header.
+Handles upload and analyze actions. Requires `Authorization: Bearer <MASTER_SECRET>` header where `<MASTER_SECRET>` is `SuperSecret2026` (default).
 
 #### Upload Action
 
-Upload a file from a URL and encrypt it.
-It supports all common formats like `.pdf`; `.jpg`; `.jpeg`; `.png`; `.svg`; `.gif`; `.webp`; `.mp4`; `.docx`; `.xlsx`; `.pptx` and many others up to 500 MiB.
+Upload a file from a URL and encrypt it. Supports all common formats like `.pdf`, `.jpg`, `.jpeg`, `.png`, `.svg`, `.gif`, `.webp`, `.mp4`, `.docx`, `.xlsx`, `.pptx` and more, up to 500 MiB.
+
+Files are processed asynchronously through a queue:
+- **Small files** (< 500 MB): Buffered in memory and encrypted
+- **Large files** (≥ 500 MB): Streamed directly to disk while encrypting
 
 **Request Body:**
 ```json
@@ -147,7 +129,7 @@ It supports all common formats like `.pdf`; `.jpg`; `.jpeg`; `.png`; `.svg`; `.g
 
 #### Analyze Action
 
-Analyze a previously uploaded file and clean up.
+Delete a previously uploaded file and its encryption key.
 
 **Request Body:**
 ```json
@@ -161,45 +143,60 @@ Analyze a previously uploaded file and clean up.
 ```json
 {
   "success": true,
-  "answer": "Analysis of ID-ABC123 is completed. System cleaned temporary data."
+  "answer": "Анализът на ID-ABC123 е завършен. Системата изчисти временните данни."
 }
 ```
 
 ## Security
 
-- Files are encrypted using AES-256-CBC with random keys and IVs.
-- Keys are stored separately in the `vault/keys` directory and are visible only to the server and the host system.
-- Authentication via Bearer token.
-- Temporary files are cleaned up after analysis.
-- Your files cannot be read without the corresponding keys, ensuring data privacy.
+- **AES-256-CBC Encryption**: All uploaded files are encrypted with AES-256-CBC using random 256-bit keys and 128-bit initialization vectors.
+- **Key Management**: Each file has a unique encryption key stored separately in `vault/keys/` directory.
+- **Bearer Token Authentication**: All requests require `Authorization: Bearer SuperSecret2026` header.
+- **Cluster Isolation**: Each worker process operates independently for improved stability.
+- **Manual Cleanup**: Files persist until explicitly deleted via the `analyze` action.
+- **No Data Exposure**: Encrypted files cannot be read without the corresponding keys, ensuring data privacy.
+- **Queue-Based Processing**: Async queue prevents resource exhaustion from concurrent uploads.
 
 ## Directory Structure
 
-- `vault/files/`: Encrypted files.
-- `vault/keys/`: Encryption keys in JSON format.
+```
+vault/
+├── files/          # Encrypted uploaded files (.dat)
+└── keys/           # Encryption keys in JSON format (.key)
+```
 
-The server code automatically creates `vault`, `vault/files`, and `vault/keys` if they do not already exist.
+**How it works:**
+- When a file is uploaded, it's encrypted and saved as `ID-XXXXXX.dat` in `vault/files/`
+- The encryption key (sessionKey, iv, processing method) is saved as `ID-XXXXXX.key` in `vault/keys/`
+- When the `analyze` action is called, both the file and its key are deleted
+- Directories are automatically created on server startup if they don't exist
 
 ## Botpress Integration
 
-For Botpress workflows, use the provided snippets in the `botpress/` directory. The server can be accessed via Tailscale IP or MagicDNS name.
+For seamless integration with Botpress, you can use the server as a secure backend for file upload and cleanup directly from your chatbot workflows. This allows you to handle sensitive documents without exposing them to third-party clouds.
 
-Options for Botpress:
-1. Self-host Botpress inside Tailscale.
-2. Run the Botpress workflow from a host that can reach your laptop.
-3. Use a small public HTTPS bridge if needed.
+### How Botpress Integration Works
 
-The following Execute Code cards use `env.YOGA_SERVER_URL` as the remote server URL and `env.MASTER_SECRET` for authorization.
+1. **Upload a file**: The user provides a file URL (for example, from a file upload card or external storage). The Botpress workflow sends this URL to your server, which downloads, encrypts, and stores the file. The server returns a `fileId`.
+2. **Analyze/Cleanup**: When the user is ready, the workflow sends the `fileId` to the server to trigger analysis and cleanup (deletion of the file and its key).
 
-- `env.YOGA_SERVER_URL` should be set to your Tailscale hostname or the public/exposed server address.
-- In Botpress, define it as a workflow or environment variable and use it inside the Execute Code card.
+### Environment Variables in Botpress
 
-Example value:
+Set these in your Botpress environment or workflow:
+
+- `YOGA_SERVER_URL`: The full URL to your server (preferably your Tailscale MagicDNS address)
+- `MASTER_SECRET`: The authentication token (default: `SuperSecret2026`)
+
+Example:
 ```env
 YOGA_SERVER_URL=https://your-device-name.your-tailnet.ts.net:3000
+MASTER_SECRET=SuperSecret2026
 ```
 
-### Execute Code #1 — Upload File
+### Example: Upload File (Botpress Execute Code Card)
+
+This code uploads a file from a user-provided URL and stores the returned `fileId` in the workflow:
+
 ```javascript
 async function execute() {
   const serverUrl = env.YOGA_SERVER_URL;
@@ -208,7 +205,7 @@ async function execute() {
   try {
     const response = await axios.post(serverUrl, {
       action: "upload",
-      url: workflow.uploadedFileUrl,
+      url: workflow.uploadedFileUrl, // Set this variable earlier in your workflow
       sessionId: event.conversationId
     }, {
       headers: { 'Authorization': `Bearer ${masterSecret}` }
@@ -216,16 +213,25 @@ async function execute() {
 
     if (response.data && response.data.fileId) {
       workflow.fileId = response.data.fileId;
-      workflow.uploadedFileUrl = null; // Чистим за паметта
+      workflow.uploadedFileUrl = null; // Clear the URL after upload
     }
   } catch (err) {
     console.error("Upload Error:", err.message);
+    workflow.fileId = null;
   }
 }
 return execute();
 ```
 
-### Execute Code #2 — Analyze File
+**How to use:**
+- Place this code in an Execute Code card after the user provides a file URL.
+- Make sure `workflow.uploadedFileUrl` is set (e.g., from a previous card).
+- On success, `workflow.fileId` will contain the ID for later use.
+
+### Example: Analyze & Cleanup File (Botpress Execute Code Card)
+
+This code deletes the uploaded file and its encryption key, and stores the server's response:
+
 ```javascript
 async function execute() {
   const serverUrl = env.YOGA_SERVER_URL;
@@ -234,7 +240,7 @@ async function execute() {
   try {
     const response = await axios.post(serverUrl, {
       action: "analyze",
-      fileId: workflow.fileId
+      fileId: workflow.fileId // Set by the upload step
     }, {
       headers: { 'Authorization': `Bearer ${masterSecret}` },
       timeout: 30000
@@ -243,20 +249,50 @@ async function execute() {
     workflow.finalResponse = response.data.answer;
   } catch (err) {
     console.error("Analyze Error:", err.message);
-    workflow.finalResponse = "Грешка при обработката на сървъра.";
+    workflow.finalResponse = "Server error during file cleanup.";
   }
 }
 return execute();
 ```
 
+**How to use:**
+- Place this code in an Execute Code card after the upload step.
+- Make sure `workflow.fileId` is set.
+- On success, `workflow.finalResponse` will contain the server's answer (e.g., confirmation of cleanup).
+
+### Tips for Botpress Integration
+
+- Always check for errors and handle them gracefully in your workflow.
+- Use Tailscale MagicDNS for secure, stable server addressing.
+- Never expose your MASTER_SECRET in public code or client-side logic.
+- You can chain these cards in a Botpress workflow for a full upload-analyze-cleanup cycle.
+
 ## Troubleshooting
 
 - Ensure Tailscale is running for network access.
-- Check logs for errors.
+- Check console logs for errors when uploading or analyzing files.
 - Verify file permissions for `vault/` directories.
+- Confirm the correct Bearer token is being sent in request headers.
+- For large files, ensure the server has enough disk space and memory.
+
+### Check Server Status
+
+
+Verify the server is running and accessible by uploading a public domain PDF (no copyright issues):
+
+```bash
+curl -H "Authorization: Bearer SuperSecret2026" \
+  -X POST http://localhost:3000 \
+  -H "Content-Type: application/json" \
+  -d '{"action":"upload","url":"https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf"}'
+```
+
+This will upload a small, freely available test PDF from the W3C. If successful, you will receive a JSON response with a `fileId`.
 
 ### Tailscale CLI
-Use these commands to verify connectivity and the Tailscale state:
+
+Use these commands to verify Tailscale connectivity:
+
 ```bash
 tailscale up
 tailscale ip -4

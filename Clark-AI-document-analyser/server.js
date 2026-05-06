@@ -4,6 +4,9 @@ const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
 const { pipeline } = require('stream/promises'); // Използваме само при големи файлове
+const cluster = require('cluster');
+const os = require('os');
+const async = require('async');
 
 const app = express();
 app.use(express.json());
@@ -26,45 +29,40 @@ clearDirectory(FILES_DIR);
 clearDirectory(KEYS_DIR);
 
 const MASTER_SECRET = "SuperSecret2026";
-const LARGE_FILE_THRESHOLD = 500 * 1024 * 1024; // Лимит: 50 MB (можеш да го промениш)
+const LARGE_FILE_THRESHOLD = 500 * 1024 * 1024; // Лимит: 500 MB (можеш да го промениш)
 
-// --- ГЛАВНА ФУНКЦИЯ ЗА КАЧВАНЕ ---
-app.post('/', async (req, res) => {
-    try {
-        const authHeader = req.headers['authorization'];
-        if (!authHeader || authHeader !== `Bearer ${MASTER_SECRET}`) {
-            return res.status(401).json({ error: "Unauthorized" });
-        }
+// Cluster support
+if (cluster.isMaster) {
+    const numCPUs = os.cpus().length;
+    console.log(`Master ${process.pid} is running`);
 
-        const { action, url, fileId, sessionId } = req.body;
+    // Fork workers
+    for (let i = 0; i < numCPUs; i++) {
+        cluster.fork();
+    }
 
-        // 1. ДЕЙСТВИЕ: АНАЛИЗ (Твоят работещ код)
-        if (action === "analyze") {
-            if (!fileId) return res.status(400).json({ error: "Missing fileId" });
-            const filePath = path.join(FILES_DIR, `${fileId}.dat`);
-            const keyPath = path.join(KEYS_DIR, `${fileId}.key`);
+    cluster.on('exit', (worker, code, signal) => {
+        console.log(`Worker ${worker.process.pid} died`);
+        // Restart worker
+        cluster.fork();
+    });
+} else {
+    // Worker process
+    console.log(`Worker ${process.pid} started`);
 
-            if (!fs.existsSync(filePath)) return res.status(404).json({ error: "Not found" });
+    // File queue
+    const uploadQueue = async.queue(async (task, callback) => {
+        const { url, fileId } = task;
 
-            // Cleanup след успех
-            fs.unlinkSync(filePath);
-            fs.unlinkSync(keyPath);
-            return res.json({ success: true, answer: `Анализът на ${fileId} е завършен. Системата изчисти временните данни.` });
-        }
-
-        // 2. ДЕЙСТВИЕ: КАЧВАНЕ (Хибридна логика)
-        if (action === "upload") {
-            if (!url) return res.status(400).json({ error: "Missing URL" });
-
+        try {
             // Първо проверяваме размера чрез HEAD заявка
             const headRes = await axios.head(url);
             const fileSize = parseInt(headRes.headers['content-length'] || "0");
             
-            const newFileId = `ID-${crypto.randomBytes(3).toString('hex').toUpperCase()}`;
             const sessionKey = crypto.randomBytes(32);
             const iv = crypto.randomBytes(16);
             const cipher = crypto.createCipheriv('aes-256-cbc', sessionKey, iv);
-            const filePath = path.join(FILES_DIR, `${newFileId}.dat`);
+            const filePath = path.join(FILES_DIR, `${fileId}.dat`);
 
             if (fileSize > LARGE_FILE_THRESHOLD) {
                 // --- ПЪТ Б: STREAMING (За големи файлове) ---
@@ -80,20 +78,63 @@ app.post('/', async (req, res) => {
             }
 
             // Запис на ключа
-            fs.writeFileSync(path.join(KEYS_DIR, `${newFileId}.key`), JSON.stringify({
+            fs.writeFileSync(path.join(KEYS_DIR, `${fileId}.key`), JSON.stringify({
                 sessionKey: sessionKey.toString('hex'),
                 iv: iv.toString('hex'),
                 processedBy: fileSize > LARGE_FILE_THRESHOLD ? 'stream' : 'buffer'
             }));
 
-            return res.json({ success: true, fileId: newFileId });
+            callback(null, fileId);
+        } catch (err) {
+            callback(err);
         }
+    }, os.cpus().length); // Concurrency based on CPU cores
 
-    } catch (err) {
-        console.error("❌ ГРЕШКА:", err.message);
-        res.status(500).json({ error: "Internal Server Error" });
-    }
-});
+    // --- ГЛАВНА ФУНКЦИЯ ЗА КАЧВАНЕ ---
+    app.post('/', async (req, res) => {
+        try {
+            const authHeader = req.headers['authorization'];
+            if (!authHeader || authHeader !== `Bearer ${MASTER_SECRET}`) {
+                return res.status(401).json({ error: "Unauthorized" });
+            }
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`🛡️ Unified Vault Server running on port ${PORT}`));
+            const { action, url, fileId, sessionId } = req.body;
+
+            // 1. ДЕЙСТВИЕ: АНАЛИЗ (Твоят работещ код)
+            if (action === "analyze") {
+                if (!fileId) return res.status(400).json({ error: "Missing fileId" });
+                const filePath = path.join(FILES_DIR, `${fileId}.dat`);
+                const keyPath = path.join(KEYS_DIR, `${fileId}.key`);
+
+                if (!fs.existsSync(filePath)) return res.status(404).json({ error: "Not found" });
+
+                // Cleanup след успех
+                fs.unlinkSync(filePath);
+                fs.unlinkSync(keyPath);
+                return res.json({ success: true, answer: `Анализът на ${fileId} е завършен. Системата изчисти временните данни.` });
+            }
+
+            // 2. ДЕЙСТВИЕ: КАЧВАНЕ (Хибридна логика)
+            if (action === "upload") {
+                if (!url) return res.status(400).json({ error: "Missing URL" });
+
+                const newFileId = `ID-${crypto.randomBytes(3).toString('hex').toUpperCase()}`;
+
+                // Add to queue
+                uploadQueue.push({ url, fileId: newFileId }, (err, resultFileId) => {
+                    if (err) {
+                        return res.status(500).json({ error: err });
+                    }
+                    res.json({ success: true, fileId: resultFileId });
+                });
+            }
+
+        } catch (err) {
+            console.error("❌ ГРЕШКА:", err.message);
+            res.status(500).json({ error: "Internal Server Error" });
+        }
+    });
+
+    const PORT = process.env.PORT || 3000;
+    app.listen(PORT, () => console.log(`🛡️ Unified Vault Server Worker ${process.pid} running on port ${PORT}`));
+}
