@@ -29,7 +29,7 @@ clearDirectory(FILES_DIR);
 clearDirectory(KEYS_DIR);
 
 const MASTER_SECRET = "SuperSecret2026";
-const LARGE_FILE_THRESHOLD = 500 * 1024 * 1024; // Лимит: 500 MB (можеш да го промениш)
+const LARGE_FILE_THRESHOLD = 500 * 1024 * 1024; // Лимит: 500 MB
 
 // Cluster support
 if (cluster.isMaster) {
