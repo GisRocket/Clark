@@ -58,30 +58,37 @@ if (cluster.isMaster) {
             // Първо проверяваме размера чрез HEAD заявка
             const headRes = await axios.head(url);
             const fileSize = parseInt(headRes.headers['content-length'] || "0");
-            
+
             const sessionKey = crypto.randomBytes(32);
-            const iv = crypto.randomBytes(16);
-            const cipher = crypto.createCipheriv('aes-256-cbc', sessionKey, iv);
+            const iv = crypto.randomBytes(12); // GCM препоръчва 12 байта IV
             const filePath = path.join(FILES_DIR, `${fileId}.dat`);
+            let authTag;
 
             if (fileSize > LARGE_FILE_THRESHOLD) {
-                // --- ПЪТ Б: STREAMING (За големи файлове) ---
+                // --- ПЪТ Б: STREAMING (За големи файлове, AES-256-GCM) ---
                 console.log(`🌊 Стрийминг режим за голям файл (${(fileSize/1024/1024).toFixed(2)} MB)`);
                 const response = await axios.get(url, { responseType: 'stream' });
-                await pipeline(response.data, cipher, fs.createWriteStream(filePath));
+                const cipher = crypto.createCipheriv('aes-256-gcm', sessionKey, iv);
+                const outStream = fs.createWriteStream(filePath);
+                await pipeline(response.data, cipher, outStream);
+                authTag = cipher.getAuthTag();
             } else {
-                // --- ПЪТ А: СТАБИЛНИЯТ ТИ КОД (За нормални файлове) ---
+                // --- ПЪТ А: СТАБИЛНИЯТ ТИ КОД (За нормални файлове, AES-256-GCM) ---
                 console.log(`⚡ Стандартен режим за файл (${(fileSize/1024/1024).toFixed(2)} MB)`);
                 const fileRes = await axios.get(url, { responseType: 'arraybuffer' });
+                const cipher = crypto.createCipheriv('aes-256-gcm', sessionKey, iv);
                 const encrypted = Buffer.concat([cipher.update(Buffer.from(fileRes.data)), cipher.final()]);
+                authTag = cipher.getAuthTag();
                 fs.writeFileSync(filePath, encrypted);
             }
 
-            // Запис на ключа
+            // Запис на ключа и таг-а
             fs.writeFileSync(path.join(KEYS_DIR, `${fileId}.key`), JSON.stringify({
                 sessionKey: sessionKey.toString('hex'),
                 iv: iv.toString('hex'),
-                processedBy: fileSize > LARGE_FILE_THRESHOLD ? 'stream' : 'buffer'
+                authTag: authTag.toString('hex'),
+                processedBy: fileSize > LARGE_FILE_THRESHOLD ? 'stream' : 'buffer',
+                cipher: 'aes-256-gcm'
             }));
 
             callback(null, fileId);
