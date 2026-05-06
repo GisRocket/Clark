@@ -20,3 +20,6 @@ Thumbs.db
 # Editor folders
 .vscode/
 .idea/
+
+# Package lock files (optional, depending on your preference)
+package-lock.json
