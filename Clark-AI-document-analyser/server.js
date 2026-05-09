@@ -58,7 +58,6 @@ if (cluster.isMaster) {
             // Първо проверяваме размера чрез HEAD заявка
             const headRes = await axios.head(url);
             const fileSize = parseInt(headRes.headers['content-length'] || "0");
-
             const sessionKey = crypto.randomBytes(32);
             const iv = crypto.randomBytes(12); // GCM препоръчва 12 байта IV
             const filePath = path.join(FILES_DIR, `${fileId}.dat`);
