@@ -4,18 +4,19 @@
 
 [![License: GPL v3](https://img.shields.io/badge/license-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0.en.html) [![Node.js](https://img.shields.io/badge/node-%3E%3D14-green.svg)](https://nodejs.org/) [![npm](https://img.shields.io/badge/npm-install-orange.svg)](https://www.npmjs.com/) [![Tailscale](https://img.shields.io/badge/Tailscale-required-blue.svg)](https://tailscale.com/)
 
-A Node.js server for secure document upload, encryption, and analysis using AES-256 encryption for the uploaded files from my Botpress Cloud chatbot. Designed to run locally with Tailscale integration for secure access.
+
+A Node.js server for secure document upload, encryption, and analysis using AES-256-GCM encryption for the uploaded files from my Botpress Cloud chatbot. Designed to run locally with Tailscale integration for secure access.
 
 ## Features
 
-- **Secure File Upload**: Upload files from URLs and encrypt them using AES-256-CBC.
+- **Secure File Upload**: Upload files from URLs and encrypt them using AES-256-GCM (authenticated encryption).
 - **File Storage & Cleanup**: Store encrypted files from upload and delete them on demand.
-- **Encryption at Rest**: All stored files are encrypted with AES-256-CBC.
+- **Encryption at Rest**: All stored files are encrypted with AES-256-GCM, providing both confidentiality and integrity.
 - **Streaming Support**: Automatically uses streaming for files larger than 500 MB.
 - **Cluster Support**: Multi-worker process for better performance on multi-core systems.
 - **Async Queue**: Efficient file upload queue with configurable concurrency.
 - **Tailscale Integration**: Secure access via Tailscale network.
-- **Botpress Compatible**: Snippets for integration with Botpress workflows.
+- **Botpress Compatible**: Snippets for integration with Botpress workflows (AES-256-GCM compatible).
 
 ## Prerequisites
 
@@ -38,6 +39,9 @@ npm install
 
 ## Configuration
 
+### Security Note
+This version uses AES-256-GCM for all file encryption, which provides authenticated encryption (confidentiality and integrity). Each file is encrypted with a unique session key, IV, and authentication tag, all stored securely in the vault/keys directory.
+
 The server requires a master secret for authentication. Set it in the code or via environment variables.
 
 ### .env file
@@ -49,13 +53,42 @@ PORT=3000
 TAILSCALE_BASE_URL=http://your-device-name.your-tailnet.ts.net:3000
 ```
 
+
 ### Important Notes
 
 - The server uses `SuperSecret2026` as the default master secret (hardcoded in `server.js`).
 - For production, change the `MASTER_SECRET` value in `server.js` or implement `.env` support for it.
-- File encryption uses AES-256-CBC with randomly generated keys and initialization vectors.
+- **File encryption now uses AES-256-GCM** (authenticated encryption) with randomly generated keys, IVs, and authentication tags.
 - Files larger than 500 MB are processed using streaming mode for efficiency.
 - Worker processes are automatically spawned based on CPU core count for optimal performance.
+
+## Botpress Integration Example
+
+You can call the upload endpoint from a Botpress Cloud action using the following code:
+
+```javascript
+const axios = require('axios');
+
+async function uploadFileToClark(url) {
+  const response = await axios.post('http://localhost:3000/', {
+    action: 'upload',
+    url: url
+  }, {
+    headers: {
+      'Authorization': 'Bearer SuperSecret2026',
+      'Content-Type': 'application/json'
+    }
+  });
+  return response.data;
+}
+
+// Usage in Botpress action:
+const fileUrl = event.payload.fileUrl; // Or wherever your file URL comes from
+const result = await uploadFileToClark(fileUrl);
+bp.logger.info('Clark upload result:', result);
+```
+
+**Note:** The server will encrypt the file using AES-256-GCM and return a `fileId` if successful. Use this `fileId` for further analysis or cleanup actions.
 
 ## Running the Server
 
@@ -260,12 +293,69 @@ return execute();
 - Make sure `workflow.fileId` is set.
 - On success, `workflow.finalResponse` will contain the server's answer (e.g., confirmation of cleanup).
 
+
 ### Tips for Botpress Integration
 
 - Always check for errors and handle them gracefully in your workflow.
 - Use Tailscale MagicDNS for secure, stable server addressing.
 - Never expose your MASTER_SECRET in public code or client-side logic.
 - You can chain these cards in a Botpress workflow for a full upload-analyze-cleanup cycle.
+
+## Botpress Execute Code Workflow Examples
+
+### 1. Upload File (Execute Code Card)
+
+```javascript
+async function execute() {
+  const serverUrl = env.YOGA_SERVER_URL; 
+  const masterSecret = env.MASTER_SECRET || 'SuperSecret2026';
+
+  try {
+    const response = await axios.post(serverUrl, {
+      action: "upload", // Изрично казваме, че качваме
+      url: workflow.uploadedFileUrl,
+      sessionId: event.conversationId
+    }, {
+      headers: { 'Authorization': `Bearer ${masterSecret}` }
+    });
+
+    if (response.data && response.data.fileId) {
+      workflow.fileId = response.data.fileId;
+      workflow.uploadedFileUrl = null; // Чистим за паметта
+    }
+  } catch (err) {
+    console.error("Upload Error:", err.message);
+  }
+}
+return execute();
+```
+
+### 2. Analyze & Cleanup File (Execute Code Card)
+
+```javascript
+async function execute() {
+  const serverUrl = env.YOGA_SERVER_URL; 
+  const masterSecret = env.MASTER_SECRET || 'SuperSecret2026';
+
+  try {
+    const response = await axios.post(serverUrl, {
+      action: "analyze", // Казваме на сървъра да анализира
+      fileId: workflow.fileId,
+      prompt: "Анализирай на български."
+    }, {
+      headers: { 'Authorization': `Bearer ${masterSecret}` },
+      timeout: 30000 
+    });
+
+    workflow.finalResponse = response.data.answer;
+  } catch (err) {
+    // Ако тук получиш 500, виж конзолата на твоя сървър (Terminal)
+    console.error("Analyze Error:", err.message);
+    workflow.finalResponse = "Грешка при обработката на сървъра.";
+  }
+}
+return execute();
+```
 
 ## Troubleshooting
 

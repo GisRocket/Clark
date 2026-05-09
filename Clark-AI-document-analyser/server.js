@@ -58,30 +58,36 @@ if (cluster.isMaster) {
             // Първо проверяваме размера чрез HEAD заявка
             const headRes = await axios.head(url);
             const fileSize = parseInt(headRes.headers['content-length'] || "0");
-            
             const sessionKey = crypto.randomBytes(32);
-            const iv = crypto.randomBytes(16);
-            const cipher = crypto.createCipheriv('aes-256-cbc', sessionKey, iv);
+            const iv = crypto.randomBytes(12); // GCM препоръчва 12 байта IV
             const filePath = path.join(FILES_DIR, `${fileId}.dat`);
+            let authTag;
 
             if (fileSize > LARGE_FILE_THRESHOLD) {
-                // --- ПЪТ Б: STREAMING (За големи файлове) ---
+                // --- ПЪТ Б: STREAMING (За големи файлове, AES-256-GCM) ---
                 console.log(`🌊 Стрийминг режим за голям файл (${(fileSize/1024/1024).toFixed(2)} MB)`);
                 const response = await axios.get(url, { responseType: 'stream' });
-                await pipeline(response.data, cipher, fs.createWriteStream(filePath));
+                const cipher = crypto.createCipheriv('aes-256-gcm', sessionKey, iv);
+                const outStream = fs.createWriteStream(filePath);
+                await pipeline(response.data, cipher, outStream);
+                authTag = cipher.getAuthTag();
             } else {
-                // --- ПЪТ А: СТАБИЛНИЯТ ТИ КОД (За нормални файлове) ---
+                // --- ПЪТ А: СТАБИЛНИЯТ ТИ КОД (За нормални файлове, AES-256-GCM) ---
                 console.log(`⚡ Стандартен режим за файл (${(fileSize/1024/1024).toFixed(2)} MB)`);
                 const fileRes = await axios.get(url, { responseType: 'arraybuffer' });
+                const cipher = crypto.createCipheriv('aes-256-gcm', sessionKey, iv);
                 const encrypted = Buffer.concat([cipher.update(Buffer.from(fileRes.data)), cipher.final()]);
+                authTag = cipher.getAuthTag();
                 fs.writeFileSync(filePath, encrypted);
             }
 
-            // Запис на ключа
+            // Запис на ключа и таг-а
             fs.writeFileSync(path.join(KEYS_DIR, `${fileId}.key`), JSON.stringify({
                 sessionKey: sessionKey.toString('hex'),
                 iv: iv.toString('hex'),
-                processedBy: fileSize > LARGE_FILE_THRESHOLD ? 'stream' : 'buffer'
+                authTag: authTag.toString('hex'),
+                processedBy: fileSize > LARGE_FILE_THRESHOLD ? 'stream' : 'buffer',
+                cipher: 'aes-256-gcm'
             }));
 
             callback(null, fileId);
@@ -89,6 +95,45 @@ if (cluster.isMaster) {
             callback(err);
         }
     }, os.cpus().length); // Concurrency based on CPU cores
+
+
+    // --- СТАТУС СТРАНИЦА ЗА GET ---
+    app.get('/', (req, res) => {
+        // Брой файлове и ключове
+        const filesCount = fs.existsSync(FILES_DIR) ? fs.readdirSync(FILES_DIR).length : 0;
+        const keysCount = fs.existsSync(KEYS_DIR) ? fs.readdirSync(KEYS_DIR).length : 0;
+        res.setHeader('Content-Type', 'text/html; charset=utf-8');
+        res.send(`
+            <html>
+            <head>
+                <title>Clark Document Analyzer Server</title>
+                <style>
+                    body { font-family: Arial, sans-serif; background: #f4f4f4; color: #222; margin: 0; padding: 0; }
+                    .container { max-width: 500px; margin: 60px auto; background: #fff; border-radius: 8px; box-shadow: 0 2px 8px #0001; padding: 32px; }
+                    h1 { color: #2a6; }
+                    .stat { font-size: 1.2em; margin: 12px 0; }
+                    .ok { color: #2a6; }
+                </style>
+                <script>
+                    function updateTime() {
+                        const now = new Date();
+                        document.getElementById('live-time').textContent = now.toLocaleString('bg-BG');
+                    }
+                    setInterval(updateTime, 1000);
+                    window.onload = updateTime;
+                </script>
+            </head>
+            <body>
+                <div class="container">
+                    <h1>Clark Vault Status</h1>
+                    <div class="stat">🗄️ Файлове във vault: <b>${filesCount}</b></div>
+                    <div class="stat">🔑 Ключове във vault: <b>${keysCount}</b></div>
+                    <div class="stat ok">Сървърът работи! <span id="live-time"></span></div>
+                </div>
+            </body>
+            </html>
+        `);
+    });
 
     // --- ГЛАВНА ФУНКЦИЯ ЗА КАЧВАНЕ ---
     app.post('/', async (req, res) => {
